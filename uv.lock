@@ -482,7 +482,7 @@ wheels = [
 [[package]]
 name = "moyu-salary"
 version = "2.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "chinese-calendar" },
     { name = "httpx" },
