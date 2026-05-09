@@ -1,7 +1,9 @@
 """薪资计算引擎 — 纯函数，无 UI 依赖，返回 dataclass。"""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+
+from chinese_calendar import is_workday
 
 from .workday import get_month_workdays
 
@@ -91,7 +93,6 @@ class SalaryCalculator:
         r.holiday_count = holidays
 
         # 是否工作日
-        from chinese_calendar import is_workday
         r.is_workday = is_workday(self.current_dt)
 
         # 标准工时（秒）
