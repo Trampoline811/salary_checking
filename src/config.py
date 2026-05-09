@@ -11,8 +11,9 @@ DEFAULTS = {
     "workday_type": "std",
     "effective_mode": False,
     "llm_provider": "shanghai",
+    "llm_model": "intern-latest",
     "llm_api_key": "",
-    "llm_base_url": "https://api.shlab.org.cn/v1",
+    "llm_base_url": "https://chat.intern-ai.org.cn/api/v1/",
 }
 
 
@@ -37,6 +38,7 @@ def get_llm_config() -> dict:
     """返回 LLM 客户端配置，优先级：env > session_state。"""
     return {
         "provider": os.getenv("LLM_PROVIDER", st.session_state.get("llm_provider", "shanghai")),
+        "model": os.getenv("LLM_MODEL", st.session_state.get("llm_model", "intern-latest")),
         "api_key": os.getenv("LLM_API_KEY", st.session_state.get("llm_api_key", "")),
         "base_url": os.getenv("LLM_BASE_URL", st.session_state.get("llm_base_url", "")),
     }

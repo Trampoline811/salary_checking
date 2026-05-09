@@ -99,7 +99,7 @@ if user_input:
     ]
 
     llm_cfg = get_llm_config()
-    client = get_client(llm_cfg["provider"], llm_cfg["api_key"], llm_cfg["base_url"])
+    client = get_client(llm_cfg["provider"], llm_cfg["api_key"], llm_cfg["base_url"], llm_cfg["model"])
     reply = client.chat(messages)
     st.session_state["chat_history"].append({"role": "assistant", "content": reply})
     st.rerun()

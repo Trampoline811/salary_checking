@@ -1,6 +1,5 @@
-"""多模型 LLM 客户端：统一接口，通过 provider 切换后端。"""
+"""多模型 LLM 客户端：统一接口，通过 OpenAI SDK 调用。"""
 from abc import ABC, abstractmethod
-import httpx
 
 
 class BaseClient(ABC):
@@ -14,46 +13,31 @@ class BaseClient(ABC):
         ...
 
 
-class OpenAICompatClient(BaseClient):
-    """OpenAI 兼容接口，适用于绝大多数 LLM API（上海AI Lab、DeepSeek、vLLM 等）。"""
+class OpenAIClient(BaseClient):
+    """基于 OpenAI SDK 的客户端，兼容书生浦语、DeepSeek 等 OpenAI 兼容 API。"""
 
-    def __init__(self, api_key: str, base_url: str, model: str = "default"):
-        self._api_key = api_key
-        if base_url.endswith("/"):
-            base_url = base_url[:-1]
-        self._base_url = base_url
+    def __init__(self, api_key: str, base_url: str, model: str = "intern-latest"):
+        from openai import OpenAI
+
         self._model = model
-        self._name = f"openai-compat({model})"
+        self._client = OpenAI(api_key=api_key, base_url=base_url)
+        self._name = f"openai({model})"
 
     @property
     def name(self) -> str:
         return self._name
 
     def chat(self, messages: list[dict], temperature: float = 0.7, max_tokens: int = 512) -> str:
-        headers = {
-            "Authorization": f"Bearer {self._api_key}",
-            "Content-Type": "application/json",
-        }
-        body = {
-            "model": self._model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
         try:
-            resp = httpx.post(
-                f"{self._base_url}/chat/completions",
-                headers=headers,
-                json=body,
-                timeout=30.0,
+            resp = self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
             )
-            resp.raise_for_status()
-            data = resp.json()
-            return data["choices"][0]["message"]["content"]
-        except httpx.HTTPError as e:
+            return resp.choices[0].message.content or ""
+        except Exception as e:
             return f"🤖 API 请求失败: {e}"
-        except (KeyError, IndexError) as e:
-            return f"🤖 响应解析失败: {e}"
 
 
 class MockClient(BaseClient):
@@ -79,7 +63,7 @@ def get_client(provider: str, api_key: str = "", base_url: str = "", model: str 
     if not api_key:
         return MockClient()
 
-    if provider in ("shanghai", "deepseek", "openai", "custom"):
-        return OpenAICompatClient(api_key=api_key, base_url=base_url, model=model)
+    if provider in ("shanghai", "intern", "deepseek", "openai", "custom"):
+        return OpenAIClient(api_key=api_key, base_url=base_url, model=model or "intern-latest")
 
     return MockClient()
