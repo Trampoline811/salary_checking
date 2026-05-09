@@ -109,8 +109,11 @@ class SalaryCalculator:
         elif self.current_dt < self.end_dt:
             worked = (self.lunch_start_dt - self.start_dt) + (self.current_dt - self.lunch_end_dt)
         else:
-            # 下班后 — 按实际时间计算(含加班/晚走)
-            worked = (self.lunch_start_dt - self.start_dt) + (self.current_dt - self.lunch_end_dt)
+            # 下班后：有效时薪模式按实际时间，默认模式封顶标准工时
+            if self.effective_mode:
+                worked = (self.lunch_start_dt - self.start_dt) + (self.current_dt - self.lunch_end_dt)
+            else:
+                worked = timedelta(seconds=r.standard_work_seconds)
         r.worked_seconds = int(worked.total_seconds())
         r.remaining_seconds = max(0, r.standard_work_seconds - r.worked_seconds)
         r.progress_pct = (r.worked_seconds / r.standard_work_seconds * 100) if r.standard_work_seconds > 0 else 0
