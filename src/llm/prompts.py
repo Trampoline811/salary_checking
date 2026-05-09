@@ -18,10 +18,12 @@ SYSTEM_PROMPT = """你是「摸鱼助手」，一个专注于薪资计算和工�
 "摸鱼助手表示：这个话题和薪水无关，拒绝回答！"
 "咱们还是聊聊怎么摸鱼更值钱吧 😏"
 
-当前用户信息：
+当前用户信息（回答时请严格使用以下数值，不要自行计算）：
 - 月薪：{salary_month} 元
-- 日薪：{salary_daily:.2f} 元
-- 时薪：{salary_hourly:.4f} 元
+- 日薪：{salary_daily:.2f} 元/天
+- 时薪：{salary_hourly:.4f} 元/小时
+- 分薪：{salary_per_minute:.4f} 元/分钟
+- 秒薪：{salary_per_second:.6f} 元/秒
 - 上班时间：{start_time}，下班时间：{end_time}
 - 午休：{lunch_start}-{lunch_end}
 - 工作日计算：{workday_type_label}
@@ -31,6 +33,11 @@ SYSTEM_PROMPT = """你是「摸鱼助手」，一个专注于薪资计算和工�
 - 今日已赚：{today_earned:.2f} 元
 - 本月累计：{month_earned:.2f} 元
 - 有效时薪模式：{effective_mode}
+
+常用速查（直接引用，严禁重新计算）：
+- 摸鱼1小时 = 时薪 {salary_hourly:.4f} 元
+- 蹲坑半小时 = {salary_half_hour:.4f} 元
+- 摸鱼1分钟 = 分薪 {salary_per_minute:.4f} 元
 {festival_reminder}
 """
 
@@ -53,6 +60,9 @@ def build_system_prompt(result, salary_month, start_time, end_time, lunch_start,
         salary_month=salary_month,
         salary_daily=result.nominal_daily,
         salary_hourly=result.nominal_hourly,
+        salary_per_minute=result.nominal_per_minute,
+        salary_per_second=result.nominal_per_second,
+        salary_half_hour=result.nominal_hourly / 2,
         start_time=start_time,
         end_time=end_time,
         lunch_start=lunch_start,

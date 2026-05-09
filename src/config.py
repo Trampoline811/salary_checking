@@ -42,10 +42,11 @@ def init_session_state():
 
 
 def get_llm_config() -> dict:
-    """返回 LLM 客户端配置，优先级：env > session_state。"""
+    """返回 LLM 客户端配置，优先级：st.secrets > env > session_state。"""
+    secrets = st.secrets if hasattr(st, "secrets") else {}
     return {
-        "provider": os.getenv("LLM_PROVIDER", st.session_state.get("llm_provider", "shanghai")),
-        "model": os.getenv("LLM_MODEL", st.session_state.get("llm_model", "intern-latest")),
-        "api_key": os.getenv("LLM_API_KEY", st.session_state.get("llm_api_key", "")),
-        "base_url": os.getenv("LLM_BASE_URL", st.session_state.get("llm_base_url", "")),
+        "provider": secrets.get("LLM_PROVIDER", os.getenv("LLM_PROVIDER", st.session_state.get("llm_provider", "shanghai"))),
+        "model": secrets.get("LLM_MODEL", os.getenv("LLM_MODEL", st.session_state.get("llm_model", "intern-latest"))),
+        "api_key": secrets.get("LLM_API_KEY", os.getenv("LLM_API_KEY", st.session_state.get("llm_api_key", ""))),
+        "base_url": secrets.get("LLM_BASE_URL", os.getenv("LLM_BASE_URL", st.session_state.get("llm_base_url", ""))),
     }

@@ -2,10 +2,21 @@
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from chinese_calendar import is_workday
 
 from .workday import get_month_workdays
+
+BEIJING_TZ = ZoneInfo("Asia/Shanghai")
+
+
+def _now_beijing() -> datetime:
+    return datetime.now(BEIJING_TZ)
+
+
+def _today_beijing() -> date:
+    return datetime.now(BEIJING_TZ).date()
 
 
 def _str2datetime(time_data: str, date_data: date) -> datetime:
@@ -70,8 +81,8 @@ class SalaryCalculator:
         self.salary_month = salary_month
         self.workday_type = workday_type
         self.effective_mode = effective_mode
-        self.date_obj = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else date.today()
-        now = datetime.now()
+        self.date_obj = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else _today_beijing()
+        now = _now_beijing()
         self.current_dt = _str2datetime(current_time, self.date_obj) if current_time else datetime.combine(
             self.date_obj, now.time()
         )

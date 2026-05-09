@@ -26,6 +26,17 @@ init_session_state()
 # ── 配置面板 ──
 render_settings()
 
+# 配置变更检测：变动时清空对话历史，防止 LLM 被旧数据带偏
+cfg_fingerprint = (
+    f"{st.session_state['salary_month']}|{st.session_state['start_time']}"
+    f"|{st.session_state['end_time']}|{st.session_state['lunch_start']}"
+    f"|{st.session_state['lunch_end']}|{st.session_state['workday_type']}"
+    f"|{st.session_state.get('effective_mode', False)}"
+)
+if st.session_state.get("_cfg_fingerprint", "") not in ("", cfg_fingerprint):
+    st.session_state["chat_history"] = []
+st.session_state["_cfg_fingerprint"] = cfg_fingerprint
+
 # ── 仪表盘 ──
 result = render_dashboard()
 

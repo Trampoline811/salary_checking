@@ -41,7 +41,7 @@ def salary_table(result):
         ],
     }
     df = pd.DataFrame(data)
-    st.dataframe(df, hide_index=True, use_container_width=True)
+    st.dataframe(df, hide_index=True, width="stretch")
 
 
 def effective_badge(effective: float, nominal: float) -> str:
