@@ -50,9 +50,8 @@ for col, q in zip(cols, QUICK_QUESTIONS):
         if st.button(q, key=f"quick_{q}"):
             clicked = q
 
-# 对话历史渲染（每条一个聊天气泡）
+# 对话历史渲染
 for msg in st.session_state["chat_history"]:
-    role = "🧑" if msg["role"] == "user" else "🤖"
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
@@ -65,13 +64,9 @@ if clicked:
 if user_input:
     # Guard 拦截
     blocked, reject_reply = topic_guard(user_input)
-    if blocked:
-        st.session_state["chat_history"].append({"role": "user", "content": user_input})
-        st.session_state["chat_history"].append({"role": "assistant", "content": reject_reply})
-        st.rerun()
 
     # 检测加班/早退，提醒开启有效时薪
-    if not st.session_state.get("effective_mode", False):
+    if not blocked and not st.session_state.get("effective_mode", False):
         change = detect_worktime_change(user_input)
         if change:
             st.warning(
@@ -79,27 +74,36 @@ if user_input:
                 "建议在右上角 ⚙ 配置中开启「有效时薪」，看看你的真实时薪变化～"
             )
 
-    # 构建消息
+    # 渲染用户消息
+    with st.chat_message("user"):
+        st.write(user_input)
     st.session_state["chat_history"].append({"role": "user", "content": user_input})
 
-    type_label = "标准 (21.75天)" if st.session_state["workday_type"] == "std" else "浮动 (实际工作日)"
-    sys_prompt = build_system_prompt(
-        result, st.session_state["salary_month"],
-        st.session_state["start_time"], st.session_state["end_time"],
-        st.session_state["lunch_start"], st.session_state["lunch_end"],
-        type_label, st.session_state.get("effective_mode", False),
-        getattr(result, "holiday_count", 0),
-    )
+    if blocked:
+        with st.chat_message("assistant"):
+            st.write(reject_reply)
+        st.session_state["chat_history"].append({"role": "assistant", "content": reject_reply})
+    else:
+        type_label = "标准 (21.75天)" if st.session_state["workday_type"] == "std" else "浮动 (实际工作日)"
+        sys_prompt = build_system_prompt(
+            result, st.session_state["salary_month"],
+            st.session_state["start_time"], st.session_state["end_time"],
+            st.session_state["lunch_start"], st.session_state["lunch_end"],
+            type_label, st.session_state.get("effective_mode", False),
+            getattr(result, "holiday_count", 0),
+        )
 
-    messages = [
-        {"role": "system", "content": sys_prompt},
-    ] + [
-        {"role": m["role"], "content": m["content"]}
-        for m in st.session_state["chat_history"]
-    ]
+        messages = [
+            {"role": "system", "content": sys_prompt},
+        ] + [
+            {"role": m["role"], "content": m["content"]}
+            for m in st.session_state["chat_history"]
+        ]
 
-    llm_cfg = get_llm_config()
-    client = get_client(llm_cfg["provider"], llm_cfg["api_key"], llm_cfg["base_url"], llm_cfg["model"])
-    reply = client.chat(messages)
-    st.session_state["chat_history"].append({"role": "assistant", "content": reply})
-    st.rerun()
+        llm_cfg = get_llm_config()
+        client = get_client(llm_cfg["provider"], llm_cfg["api_key"], llm_cfg["base_url"], llm_cfg["model"])
+
+        with st.chat_message("assistant"):
+            reply = st.write_stream(client.chat_stream(messages))
+
+        st.session_state["chat_history"].append({"role": "assistant", "content": reply})

@@ -1,11 +1,16 @@
 """多模型 LLM 客户端：统一接口，通过 OpenAI SDK 调用。"""
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 
 
 class BaseClient(ABC):
     @abstractmethod
     def chat(self, messages: list[dict], **kwargs) -> str:
         ...
+
+    def chat_stream(self, messages: list[dict], **kwargs) -> Iterator[str]:
+        """流式对话，默认降级为非流式。子类可覆盖。"""
+        yield self.chat(messages, **kwargs)
 
     @property
     @abstractmethod
@@ -39,6 +44,22 @@ class OpenAIClient(BaseClient):
         except Exception as e:
             return f"🤖 API 请求失败: {e}"
 
+    def chat_stream(self, messages: list[dict], temperature: float = 0.7, max_tokens: int = 512) -> Iterator[str]:
+        try:
+            stream = self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    yield delta.content
+        except Exception as e:
+            yield f"🤖 API 请求失败: {e}"
+
 
 class MockClient(BaseClient):
     """无 API 时的降级客户端，返回预设俏皮话。"""
@@ -57,6 +78,13 @@ class MockClient(BaseClient):
         reply = self._REPLIES[self._idx % len(self._REPLIES)]
         self._idx += 1
         return reply
+
+    def chat_stream(self, messages: list[dict], **kwargs) -> Iterator[str]:
+        import time
+        reply = self.chat(messages)
+        for i in range(0, len(reply), 5):
+            yield reply[i:i+5]
+            time.sleep(0.03)
 
 
 def get_client(provider: str, api_key: str = "", base_url: str = "", model: str = "") -> BaseClient:

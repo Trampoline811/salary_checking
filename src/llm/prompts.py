@@ -25,6 +25,7 @@ SYSTEM_PROMPT = """你是「摸鱼助手」，一个专注于薪资计算和工�
 - 上班时间：{start_time}，下班时间：{end_time}
 - 午休：{lunch_start}-{lunch_end}
 - 工作日计算：{workday_type_label}
+- 本月工作日：{total_workdays} 天，已过 {worked_days} 天，剩余 {remaining_workdays} 天
 - 今日已工作：{worked_str}
 - 下班倒计时：{remaining_str}
 - 今日已赚：{today_earned:.2f} 元
@@ -47,6 +48,7 @@ REJECT_MESSAGES = [
 def build_system_prompt(result, salary_month, start_time, end_time, lunch_start, lunch_end,
                         workday_type_label, effective_mode, holiday_count) -> str:
     festival = FESTIVAL_REMINDER if holiday_count > 0 else ""
+    remaining_workdays = max(0, result.total_workdays - result.worked_days)
     return SYSTEM_PROMPT.format(
         salary_month=salary_month,
         salary_daily=result.nominal_daily,
@@ -56,6 +58,9 @@ def build_system_prompt(result, salary_month, start_time, end_time, lunch_start,
         lunch_start=lunch_start,
         lunch_end=lunch_end,
         workday_type_label=workday_type_label,
+        total_workdays=result.total_workdays,
+        worked_days=result.worked_days,
+        remaining_workdays=remaining_workdays,
         worked_str=result.worked_str,
         remaining_str=result.remaining_str,
         today_earned=result.today_earned,
