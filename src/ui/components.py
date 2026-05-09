@@ -7,15 +7,18 @@ def kpi_card(label: str, value: str, delta: str | None = None, color: str = "#e9
     st.metric(label=label, value=value, delta=delta)
 
 
-def kpi_row(cards: list[tuple[str, str, str | None]]):
+def kpi_row(cards: list[tuple[str, str, str | None] | tuple[str, str]]):
     """一行 KPI 卡片，自动按列数分配。
 
-    cards: [(label, value, delta_or_None), ...]
+    cards: [(label, value) 或 (label, value, delta_or_None), ...]
     """
     cols = st.columns(len(cards))
-    for col, (label, value, delta) in zip(cols, cards):
+    for col, card in zip(cols, cards):
         with col:
-            kpi_card(label, value, delta)
+            if len(card) == 2:
+                kpi_card(*card)
+            else:
+                kpi_card(card[0], card[1], card[2])
 
 
 def progress_bar(pct: float, text: str):
