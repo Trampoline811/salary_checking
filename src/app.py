@@ -11,7 +11,7 @@ from src.core.calculator import SalaryCalculator
 from src.ui.settings import render_settings
 from src.ui.dashboard import render_dashboard
 from src.llm.client import get_client
-from src.llm.guard import topic_guard
+from src.llm.guard import topic_guard, detect_worktime_change
 from src.llm.prompts import build_system_prompt, QUICK_QUESTIONS
 
 st.set_page_config(
@@ -35,6 +35,12 @@ st.subheader("🤖 AI 摸鱼助手")
 
 if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = []
+
+# 对话裁剪：只保留最近 8 轮
+MAX_ROUNDS = 8
+MAX_MESSAGES = MAX_ROUNDS * 2
+if len(st.session_state["chat_history"]) > MAX_MESSAGES:
+    st.session_state["chat_history"] = st.session_state["chat_history"][-MAX_MESSAGES:]
 
 # 快捷提问
 cols = st.columns(len(QUICK_QUESTIONS))
@@ -63,6 +69,15 @@ if user_input:
         st.session_state["chat_history"].append({"role": "user", "content": user_input})
         st.session_state["chat_history"].append({"role": "assistant", "content": reject_reply})
         st.rerun()
+
+    # 检测加班/早退，提醒开启有效时薪
+    if not st.session_state.get("effective_mode", False):
+        change = detect_worktime_change(user_input)
+        if change:
+            st.warning(
+                f"⚠️ 检测到你提到了{'加班' if change == 'overtime' else '早退'}！"
+                "建议在右上角 ⚙ 配置中开启「有效时薪」，看看你的真实时薪变化～"
+            )
 
     # 构建消息
     st.session_state["chat_history"].append({"role": "user", "content": user_input})

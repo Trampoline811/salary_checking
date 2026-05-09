@@ -35,3 +35,19 @@ def topic_guard(message: str) -> tuple[bool, str]:
         return False, ""
 
     return True, random.choice(REJECT_REPLIES)
+
+
+OVERTIME_KEYWORDS = ["加班", "晚走", "晚下班", "多干了", "延时"]
+EARLY_LEAVE_KEYWORDS = ["早退", "提前下班", "先走", "早走", "早点下班"]
+
+
+def detect_worktime_change(message: str) -> str | None:
+    """检测消息中是否提及加班或早退。
+
+    Returns: "overtime" | "early_leave" | None
+    """
+    if any(kw in message for kw in OVERTIME_KEYWORDS):
+        return "overtime"
+    if any(kw in message for kw in EARLY_LEAVE_KEYWORDS):
+        return "early_leave"
+    return None
