@@ -1,5 +1,12 @@
 """配置管理：URL 参数 > session_state > 默认值。"""
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# 加载项目根目录的 .env 文件
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 import streamlit as st
 
 DEFAULTS = {
