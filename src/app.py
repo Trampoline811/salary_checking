@@ -1,4 +1,10 @@
 """摸鱼助手 v2.0 — Streamlit 主入口。"""
+import sys
+from pathlib import Path
+
+# Streamlit 直接运行脚本时 src 不在 sys.path 中
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import streamlit as st
 from src.config import init_session_state, get_llm_config
 from src.core.calculator import SalaryCalculator
